@@ -208,7 +208,7 @@ public class TickView extends View {
         void onCheckedChanged(TickView tickView, boolean isCheck);
     }
 
-    public void setmOnCheckedChangeListener(OnCheckedChangeListener listener) {
+    public void setOnCheckedChangeListener(OnCheckedChangeListener listener) {
         this.mOnCheckedChangeListener = listener;
     }
 }
