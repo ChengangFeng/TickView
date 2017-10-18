@@ -15,7 +15,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         tickView = (TickView) findViewById(R.id.tick_view);
-        tickView.setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.click_btn).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 tickView.click();
