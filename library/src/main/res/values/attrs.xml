@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="TickView">
+        <attr name="uncheck_base_color" format="color"/>
+        <attr name="check_base_color" format="color"/>
+        <attr name="check_tick_color" format="color"/>
+    </declare-styleable>
+</resources>

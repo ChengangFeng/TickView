@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="xxx">#f5d747</color>
-    <color name="yyy">#eaeaea</color>
+    <color name="tick_yellow">#f5d747</color>
+    <color name="tick_gray">#eaeaea</color>
+    <color name="tick_white">#fff</color>
 </resources>
