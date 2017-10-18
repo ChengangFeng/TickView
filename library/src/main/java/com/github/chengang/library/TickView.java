@@ -3,7 +3,6 @@ package com.github.chengang.library;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.support.annotation.Nullable;
@@ -59,6 +58,8 @@ public class TickView extends View {
     private int checkBaseColor;
     private int checkTickColor;
 
+    private OnCheckedChangeListener mOnCheckedChangeListener;
+
     public TickView(Context context) {
         this(context, null);
     }
@@ -72,6 +73,7 @@ public class TickView extends View {
         mContext = context;
         initAttrs(attrs);
         init();
+        setUpEvent();
     }
 
     private void initAttrs(AttributeSet attrs) {
@@ -104,6 +106,19 @@ public class TickView extends View {
         mPaintTick.setStrokeWidth(8);
 
         mRectF = new RectF();
+    }
+
+    private void setUpEvent() {
+        this.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isChecked = !isChecked;
+                reset();
+                if (mOnCheckedChangeListener != null) {
+                    mOnCheckedChangeListener.onCheckedChanged((TickView) view, isChecked);
+                }
+            }
+        });
     }
 
     @Override
@@ -187,5 +202,13 @@ public class TickView extends View {
         mRectF.set(centerX - 90, centerY - 90, centerX + 90, centerY + 90);
 
         invalidate();
+    }
+
+    public interface OnCheckedChangeListener {
+        void onCheckedChanged(TickView tickView, boolean isCheck);
+    }
+
+    public void setmOnCheckedChangeListener(OnCheckedChangeListener listener) {
+        this.mOnCheckedChangeListener = listener;
     }
 }
