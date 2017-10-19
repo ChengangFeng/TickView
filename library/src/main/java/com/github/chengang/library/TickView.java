@@ -94,17 +94,17 @@ public class TickView extends View {
         mPaintRing.setStyle(Paint.Style.STROKE);
         mPaintRing.setColor(isChecked ? checkBaseColor : unCheckBaseColor);
         mPaintRing.setStrokeCap(Paint.Cap.ROUND);
-        mPaintRing.setStrokeWidth(8);
+        mPaintRing.setStrokeWidth(dp2px(mContext, 2.5f));
 
         if (mPaintCircle == null) mPaintCircle = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaintCircle.setColor(checkBaseColor);
-        mPaintCircle.setStrokeWidth(4);
+        mPaintCircle.setStrokeWidth(dp2px(mContext, 1));
 
         if (mPaintTick == null) mPaintTick = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaintTick.setColor(isChecked ? checkTickColor : unCheckBaseColor);
         mPaintTick.setStyle(Paint.Style.STROKE);
         mPaintTick.setStrokeCap(Paint.Cap.ROUND);
-        mPaintTick.setStrokeWidth(8);
+        mPaintTick.setStrokeWidth(dp2px(mContext, 2.5f));
 
     }
 
@@ -199,7 +199,7 @@ public class TickView extends View {
                 if (scaleCounter <= -scaleCounterRange) {
                     scaleCounter = -scaleCounterRange;
                 }
-                float strokeWith = mPaintRing.getStrokeWidth() + (scaleCounter > 0 ? 3.5F : -3.5F);
+                float strokeWith = mPaintRing.getStrokeWidth() + (scaleCounter > 0 ? dp2px(mContext, 1) : -dp2px(mContext, 1));
                 mPaintRing.setStrokeWidth(strokeWith);
                 canvas.drawArc(mRectF, 90, 360, false, mPaintRing);
             }
