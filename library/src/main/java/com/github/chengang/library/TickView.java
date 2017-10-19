@@ -6,7 +6,6 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.support.annotation.Nullable;
-import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -44,15 +43,16 @@ public class TickView extends View {
     //是否被点亮
     private boolean isChecked = false;
 
-    //勾的半径()
-    private static final float TICK_RADIUS = 35;
-    //勾的偏移
-    private static final float TICK_RADIUS_OFFSET = 10;
-
     private int unCheckBaseColor;
     private int checkBaseColor;
     private int checkTickColor;
     private int radius;
+    //勾的半径()
+    private float tickRadius;
+    //勾的偏移
+    private float tickRadiusOffset;
+    //放大动画的最大范围
+    private int scaleCounterRange;
 
     private TickRateEnum mTickRateEnum;
 
@@ -83,6 +83,10 @@ public class TickView extends View {
         int rateMode = typedArray.getInt(R.styleable.TickView_rate, 1);
         mTickRateEnum = TickRateEnum.getRateEnum(rateMode);
         typedArray.recycle();
+
+        scaleCounterRange = dp2px(mContext, 30);
+        tickRadius = dp2px(mContext, 12);
+        tickRadiusOffset = dp2px(mContext, 4);
     }
 
     private void init() {
@@ -117,23 +121,49 @@ public class TickView extends View {
         });
     }
 
+    private int getMySize(int defaultSize, int measureSpec) {
+        int mySize = defaultSize;
+
+        int mode = MeasureSpec.getMode(measureSpec);
+        int size = MeasureSpec.getSize(measureSpec);
+
+        switch (mode) {
+            case MeasureSpec.UNSPECIFIED:
+            case MeasureSpec.AT_MOST:
+                mySize = defaultSize;
+                break;
+            case MeasureSpec.EXACTLY:
+                mySize = size;
+                break;
+        }
+        return mySize;
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        int width = getMySize(radius * 2 + scaleCounterRange * 2, widthMeasureSpec);
+        int height = getMySize(radius * 2 + scaleCounterRange * 2, heightMeasureSpec);
+
+        height = width = Math.max(width, height);
+
+        setMeasuredDimension(width, height);
+
         centerX = getMeasuredWidth() / 2;
         centerY = getMeasuredHeight() / 2;
 
+        //设置圆圈的外切矩形
         mRectF.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius);
 
         //设置打钩的几个点坐标
-        mPoints[0] = centerX - TICK_RADIUS + TICK_RADIUS_OFFSET;
+        mPoints[0] = centerX - tickRadius + tickRadiusOffset;
         mPoints[1] = (float) centerY;
-        mPoints[2] = centerX - TICK_RADIUS / 2 + TICK_RADIUS_OFFSET;
-        mPoints[3] = centerY + TICK_RADIUS / 2;
-        mPoints[4] = centerX - TICK_RADIUS / 2 + TICK_RADIUS_OFFSET;
-        mPoints[5] = centerY + TICK_RADIUS / 2;
-        mPoints[6] = centerX + TICK_RADIUS * 2 / 3 + TICK_RADIUS_OFFSET;
-        mPoints[7] = centerY - TICK_RADIUS * 2 / 3;
+        mPoints[2] = centerX - tickRadius / 2 + tickRadiusOffset;
+        mPoints[3] = centerY + tickRadius / 2;
+        mPoints[4] = centerX - tickRadius / 2 + tickRadiusOffset;
+        mPoints[5] = centerY + tickRadius / 2;
+        mPoints[6] = centerX + tickRadius * 2 / 4 + tickRadiusOffset;
+        mPoints[7] = centerY - tickRadius * 2 / 4;
     }
 
     @Override
@@ -144,7 +174,7 @@ public class TickView extends View {
             canvas.drawLines(mPoints, mPaintTick);
             return;
         }
-        //画圆弧进度 // TODO: 2017/10/19 画圆弧的速度
+        //画圆弧进度
         ringCounter += mTickRateEnum.getRingCounterUnit();
         if (ringCounter >= 360) {
             ringCounter = 360;
@@ -154,7 +184,7 @@ public class TickView extends View {
         if (ringCounter == 360) {
             mPaintCircle.setColor(checkBaseColor);
             canvas.drawCircle(centerX, centerY, radius, mPaintCircle);
-            //绘制白色的圆 // TODO: 2017/10/19 画缩小圆的速度
+            //绘制白色的圆
             mPaintCircle.setColor(checkTickColor);
             circleCounter += mTickRateEnum.getCircleCounterUnit();
             canvas.drawCircle(centerX, centerY, radius - circleCounter, mPaintCircle);
@@ -164,21 +194,17 @@ public class TickView extends View {
                 if (alphaCount >= 255) alphaCount = 255;
                 mPaintTick.setAlpha(alphaCount);
                 canvas.drawLines(mPoints, mPaintTick);
-                //放大的动画 // TODO: 2017/10/19 放大的范围和速度
+                //放大的动画
                 scaleCounter -= mTickRateEnum.getScaleCounterUnit();
-                if (scaleCounter <= -45) {
-                    scaleCounter = -45;
+                if (scaleCounter <= -scaleCounterRange) {
+                    scaleCounter = -scaleCounterRange;
                 }
-                if (scaleCounter > 0) {
-                    mPaintRing.setStrokeWidth(mPaintRing.getStrokeWidth() + 3.5F);
-                    canvas.drawArc(mRectF, 90, 360, false, mPaintRing);
-                } else {
-                    mPaintRing.setStrokeWidth(mPaintRing.getStrokeWidth() - 3.5F);
-                    canvas.drawArc(mRectF, 90, 360, false, mPaintRing);
-                }
+                float strokeWith = mPaintRing.getStrokeWidth() + (scaleCounter > 0 ? 3.5F : -3.5F);
+                mPaintRing.setStrokeWidth(strokeWith);
+                canvas.drawArc(mRectF, 90, 360, false, mPaintRing);
             }
         }
-        if (scaleCounter != -45) {
+        if (scaleCounter != -scaleCounterRange) {
             postInvalidate();
         }
     }
@@ -206,6 +232,11 @@ public class TickView extends View {
     private static int dp2px(Context context, float dpValue) {
         final float scale = context.getResources().getDisplayMetrics().density;
         return (int) (dpValue * scale + 0.5f);
+    }
+
+    private static int px2dp(Context context, float pxValue) {
+        final float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (pxValue / scale + 0.5f);
     }
 
     public interface OnCheckedChangeListener {

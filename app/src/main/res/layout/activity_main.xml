@@ -6,12 +6,30 @@
     android:layout_height="match_parent"
     tools:context="com.github.chengang.tickview.MainActivity">
 
-    <com.github.chengang.library.TickView
-        android:id="@+id/tick_view"
-        android:layout_width="190dp"
-        android:layout_height="190dp"
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        app:rate="normal" />
+        android:orientation="horizontal">
+
+        <com.github.chengang.library.TickView
+            android:id="@+id/tick_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:rate="normal" />
+
+        <View
+            android:layout_width="20dp"
+            android:layout_height="20dp" />
+
+        <com.github.chengang.library.TickView
+            android:id="@+id/tick_view_accent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:check_base_color="@color/colorAccent"
+            app:rate="normal" />
+
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
