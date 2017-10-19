@@ -19,7 +19,19 @@ public class MainActivity extends AppCompatActivity {
         tickView.setOnCheckedChangeListener(new TickView.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(TickView tickView, boolean isCheck) {
-                Toast.makeText(MainActivity.this,isCheck+"",Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, isCheck + "", Toast.LENGTH_SHORT).show();
+            }
+        });
+        findViewById(R.id.check_btn).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                tickView.setChecked(true);
+            }
+        });
+        findViewById(R.id.uncheck_btn).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                tickView.setChecked(false);
             }
         });
     }

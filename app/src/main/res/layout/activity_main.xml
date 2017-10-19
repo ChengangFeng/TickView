@@ -1,23 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context="com.github.chengang.tickview.MainActivity">
 
     <com.github.chengang.library.TickView
-        android:layout_centerInParent="true"
         android:id="@+id/tick_view"
         android:layout_width="190dp"
         android:layout_height="190dp"
-        app:check_base_color="@color/colorAccent"/>
+        android:layout_centerInParent="true"
+        app:check_base_color="@color/colorAccent" />
 
-    <Button
-        android:layout_alignParentBottom="true"
-        android:id="@+id/click_btn"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="click"/>
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal"
+        android:weightSum="2">
+
+        <Button
+            android:id="@+id/check_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="选中" />
+
+        <Button
+            android:id="@+id/uncheck_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="取消" />
+
+    </LinearLayout>
 
 </RelativeLayout>

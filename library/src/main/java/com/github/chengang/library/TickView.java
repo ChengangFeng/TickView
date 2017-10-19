@@ -26,7 +26,7 @@ public class TickView extends View {
     private Paint mPaintTick;
 
     //整个圆外切的矩形
-    private RectF mRectF;
+    private RectF mRectF = new RectF();
     //记录打钩路径的三个点坐标
     private float[] mPoints = new float[8];
 
@@ -85,27 +85,22 @@ public class TickView extends View {
     }
 
     private void init() {
-        mPaintRing = new Paint(Paint.ANTI_ALIAS_FLAG);
+        if (mPaintRing == null) mPaintRing = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaintRing.setStyle(Paint.Style.STROKE);
-        if (isChecked) {
-            mPaintRing.setColor(checkBaseColor);
-        } else {
-            mPaintRing.setColor(unCheckBaseColor);
-        }
+        mPaintRing.setColor(isChecked ? checkBaseColor : unCheckBaseColor);
         mPaintRing.setStrokeCap(Paint.Cap.ROUND);
         mPaintRing.setStrokeWidth(8);
 
-        mPaintCircle = new Paint(Paint.ANTI_ALIAS_FLAG);
+        if (mPaintCircle == null) mPaintCircle = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaintCircle.setColor(checkBaseColor);
         mPaintCircle.setStrokeWidth(4);
 
-        mPaintTick = new Paint(Paint.ANTI_ALIAS_FLAG);
+        if (mPaintTick == null) mPaintTick = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaintTick.setColor(isChecked ? checkTickColor : unCheckBaseColor);
         mPaintTick.setStyle(Paint.Style.STROKE);
         mPaintTick.setStrokeCap(Paint.Cap.ROUND);
         mPaintTick.setStrokeWidth(8);
 
-        mRectF = new RectF();
     }
 
     private void setUpEvent() {
@@ -187,13 +182,14 @@ public class TickView extends View {
         }
     }
 
-    public void click() {
-        isChecked = !isChecked;
-        reset();
+    public void setChecked(boolean checked) {
+        if (this.isChecked != checked) {
+            isChecked = checked;
+            reset();
+        }
     }
 
-
-    public void reset() {
+    private void reset() {
         init();
         ringCounter = 0;
         circleCounter = 0;
