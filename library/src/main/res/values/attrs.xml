@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="TickView">
-        <attr name="uncheck_base_color" format="color"/>
-        <attr name="check_base_color" format="color"/>
-        <attr name="check_tick_color" format="color"/>
+        <attr name="uncheck_base_color" format="color" />
+        <attr name="check_base_color" format="color" />
+        <attr name="check_tick_color" format="color" />
+        <attr name="radius" format="dimension" />
+        <attr name="rate">
+            <enum name="slow" value="0"/>
+            <enum name="normal" value="1"/>
+            <enum name="fast" value="2"/>
+        </attr>
     </declare-styleable>
 </resources>

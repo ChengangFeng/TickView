@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -47,16 +48,13 @@ public class TickView extends View {
     private static final float TICK_RADIUS = 35;
     //勾的偏移
     private static final float TICK_RADIUS_OFFSET = 10;
-    //圆环进度增加的单位（小于90）
-    private static final int RING_COUNTER_UNIT = 10;
-    //圆圈收缩的单位
-    private static final int CIRCLE_COUNTER_UNIT = 6;
-    //圆圈最后放大收缩的单位
-    private static final int SCALE_COUNTER_UNIT = 4;
 
     private int unCheckBaseColor;
     private int checkBaseColor;
     private int checkTickColor;
+    private int radius;
+
+    private TickRateEnum mTickRateEnum;
 
     private OnCheckedChangeListener mOnCheckedChangeListener;
 
@@ -81,6 +79,9 @@ public class TickView extends View {
         unCheckBaseColor = typedArray.getColor(R.styleable.TickView_uncheck_base_color, getResources().getColor(R.color.tick_gray));
         checkBaseColor = typedArray.getColor(R.styleable.TickView_check_base_color, getResources().getColor(R.color.tick_yellow));
         checkTickColor = typedArray.getColor(R.styleable.TickView_uncheck_base_color, getResources().getColor(R.color.tick_white));
+        radius = typedArray.getDimensionPixelOffset(R.styleable.TickView_radius, dp2px(mContext, 30));
+        int rateMode = typedArray.getInt(R.styleable.TickView_rate, 1);
+        mTickRateEnum = TickRateEnum.getRateEnum(rateMode);
         typedArray.recycle();
     }
 
@@ -122,7 +123,7 @@ public class TickView extends View {
         centerX = getMeasuredWidth() / 2;
         centerY = getMeasuredHeight() / 2;
 
-        mRectF.set(centerX - 80, centerY - 80, centerX + 80, centerY + 80);
+        mRectF.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius);
 
         //设置打钩的几个点坐标
         mPoints[0] = centerX - TICK_RADIUS + TICK_RADIUS_OFFSET;
@@ -143,8 +144,8 @@ public class TickView extends View {
             canvas.drawLines(mPoints, mPaintTick);
             return;
         }
-        //画圆弧进度
-        ringCounter += RING_COUNTER_UNIT;
+        //画圆弧进度 // TODO: 2017/10/19 画圆弧的速度
+        ringCounter += mTickRateEnum.getRingCounterUnit();
         if (ringCounter >= 360) {
             ringCounter = 360;
         }
@@ -152,19 +153,19 @@ public class TickView extends View {
 
         if (ringCounter == 360) {
             mPaintCircle.setColor(checkBaseColor);
-            canvas.drawCircle(centerX, centerY, 90, mPaintCircle);
-            //绘制白色的圆
+            canvas.drawCircle(centerX, centerY, radius, mPaintCircle);
+            //绘制白色的圆 // TODO: 2017/10/19 画缩小圆的速度
             mPaintCircle.setColor(checkTickColor);
-            circleCounter += CIRCLE_COUNTER_UNIT;
-            canvas.drawCircle(centerX, centerY, 90 - circleCounter, mPaintCircle);
-            if (circleCounter >= 130) {
-                //显示打钩
+            circleCounter += mTickRateEnum.getCircleCounterUnit();
+            canvas.drawCircle(centerX, centerY, radius - circleCounter, mPaintCircle);
+            if (circleCounter >= radius + 40) {
+                //显示打钩（外加一个透明的渐变）
                 alphaCount += 20;
                 if (alphaCount >= 255) alphaCount = 255;
                 mPaintTick.setAlpha(alphaCount);
                 canvas.drawLines(mPoints, mPaintTick);
-                //放大的动画
-                scaleCounter -= SCALE_COUNTER_UNIT;
+                //放大的动画 // TODO: 2017/10/19 放大的范围和速度
+                scaleCounter -= mTickRateEnum.getScaleCounterUnit();
                 if (scaleCounter <= -45) {
                     scaleCounter = -45;
                 }
@@ -191,13 +192,20 @@ public class TickView extends View {
 
     private void reset() {
         init();
+
         ringCounter = 0;
         circleCounter = 0;
         scaleCounter = 45;
         alphaCount = 0;
-        mRectF.set(centerX - 90, centerY - 90, centerX + 90, centerY + 90);
+
+        mRectF.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius);
 
         invalidate();
+    }
+
+    private static int dp2px(Context context, float dpValue) {
+        final float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (dpValue * scale + 0.5f);
     }
 
     public interface OnCheckedChangeListener {
