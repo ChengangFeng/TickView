@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <declare-styleable name="TickView">
-        <attr name="uncheck_base_color" format="color" />
-        <attr name="check_base_color" format="color" />
-        <attr name="check_tick_color" format="color" />
-        <attr name="radius" format="dimension" />
-        <attr name="rate">
-            <enum name="slow" value="0"/>
-            <enum name="normal" value="1"/>
-            <enum name="fast" value="2"/>
-        </attr>
-    </declare-styleable>
+<declare-styleable name="TickView">
+    <!--没有选中的基调颜色-->
+    <attr name="uncheck_base_color" format="color" />
+    <!--选中后的基调颜色-->
+    <attr name="check_base_color" format="color" />
+    <!--选中后钩的颜色-->
+    <attr name="check_tick_color" format="color" />
+    <!--圆的半径-->
+    <attr name="radius" format="dimension" />
+    <!--动画执行的速度-->
+    <attr name="rate">
+        <enum name="slow" value="0"/>
+        <enum name="normal" value="1"/>
+        <enum name="fast" value="2"/>
+    </attr>
+</declare-styleable>
 </resources>
