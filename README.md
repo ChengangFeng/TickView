@@ -1,7 +1,6 @@
 # TickView
-一个打钩的小动画
+一个精致的打钩小动画，模仿轻芒杂志标记已读的动画
 
----
 
 ### 效果图
 ![](https://github.com/ChengangFeng/TickView/blob/master/art/tick_view_animation.gif)
