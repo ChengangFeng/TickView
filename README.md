@@ -6,4 +6,4 @@
 ![](https://github.com/ChengangFeng/TickView/blob/master/art/tick_view_animation.gif)
  
 ### 思路实现
-* 简书，[http://www.jianshu.com/p/673e3b3715a2](http://www.jianshu.com/p/673e3b3715a2)
+* 简书，[http://www.jianshu.com/p/673e3b3715a2](http://www.jianshu.com/p/1b2cdba03d23)
