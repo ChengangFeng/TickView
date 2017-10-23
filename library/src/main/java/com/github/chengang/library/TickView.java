@@ -78,7 +78,7 @@ public class TickView extends View {
         TypedArray typedArray = mContext.obtainStyledAttributes(attrs, R.styleable.TickView);
         unCheckBaseColor = typedArray.getColor(R.styleable.TickView_uncheck_base_color, getResources().getColor(R.color.tick_gray));
         checkBaseColor = typedArray.getColor(R.styleable.TickView_check_base_color, getResources().getColor(R.color.tick_yellow));
-        checkTickColor = typedArray.getColor(R.styleable.TickView_uncheck_base_color, getResources().getColor(R.color.tick_white));
+        checkTickColor = typedArray.getColor(R.styleable.TickView_check_tick_color, getResources().getColor(R.color.tick_white));
         radius = typedArray.getDimensionPixelOffset(R.styleable.TickView_radius, dp2px(mContext, 30));
         int rateMode = typedArray.getInt(R.styleable.TickView_rate, 1);
         mTickRateEnum = TickRateEnum.getRateEnum(rateMode);
