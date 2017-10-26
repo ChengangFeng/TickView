@@ -1,5 +1,9 @@
 package com.github.chengang.library;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
@@ -36,8 +40,8 @@ public class TickView extends View {
 
     //计数器
     private int circleCounter = 0;
-    private int scaleCounter = 45;
-    private int ringCounter = 0;
+    private int circleRadius = 0;
+    private int ringProgress = 0;
     private int alphaCount = 0;
 
     //是否被点亮
@@ -54,9 +58,10 @@ public class TickView extends View {
     //放大动画的最大范围
     private int scaleCounterRange;
 
-    private TickRateEnum mTickRateEnum;
-
     private OnCheckedChangeListener mOnCheckedChangeListener;
+
+    private boolean isAnimationRuning = false;
+    private boolean isRingAnimationEnd = false;
 
     public TickView(Context context) {
         this(context, null);
@@ -80,8 +85,6 @@ public class TickView extends View {
         checkBaseColor = typedArray.getColor(R.styleable.TickView_check_base_color, getResources().getColor(R.color.tick_yellow));
         checkTickColor = typedArray.getColor(R.styleable.TickView_check_tick_color, getResources().getColor(R.color.tick_white));
         radius = typedArray.getDimensionPixelOffset(R.styleable.TickView_radius, dp2px(mContext, 30));
-        int rateMode = typedArray.getInt(R.styleable.TickView_rate, 1);
-        mTickRateEnum = TickRateEnum.getRateEnum(rateMode);
         typedArray.recycle();
 
         scaleCounterRange = dp2px(mContext, 30);
@@ -98,7 +101,6 @@ public class TickView extends View {
 
         if (mPaintCircle == null) mPaintCircle = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaintCircle.setColor(checkBaseColor);
-        mPaintCircle.setStrokeWidth(dp2px(mContext, 1));
 
         if (mPaintTick == null) mPaintTick = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaintTick.setColor(isChecked ? checkTickColor : unCheckBaseColor);
@@ -175,40 +177,52 @@ public class TickView extends View {
             return;
         }
         //画圆弧进度
-        ringCounter += mTickRateEnum.getRingCounterUnit();
-        if (ringCounter >= 360) {
-            ringCounter = 360;
-        }
-        canvas.drawArc(mRectF, 90, ringCounter, false, mPaintRing);
+        canvas.drawArc(mRectF, 90, ringProgress, false, mPaintRing);
+        //画黄色的背景
+        mPaintCircle.setColor(checkBaseColor);
+        canvas.drawCircle(centerX, centerY, ringProgress == 360 ? radius : 0, mPaintCircle);
+        //画收缩的白色圆
+        mPaintCircle.setColor(checkTickColor);
+        canvas.drawCircle(centerX, centerY, ringProgress == 360 ? circleRadius : 0, mPaintCircle);
+        if (!isAnimationRuning) {
+            isAnimationRuning = true;
+            ObjectAnimator ringAnimator = ObjectAnimator.ofInt(this, "ringProgress", 0, 360);
+            ringAnimator.setDuration(500);
+            ringAnimator.setInterpolator(null);
 
-        if (ringCounter == 360) {
-            mPaintCircle.setColor(checkBaseColor);
-            canvas.drawCircle(centerX, centerY, radius, mPaintCircle);
-            //绘制白色的圆
-            mPaintCircle.setColor(checkTickColor);
-            circleCounter += mTickRateEnum.getCircleCounterUnit();
-            canvas.drawCircle(centerX, centerY, radius - circleCounter, mPaintCircle);
-            if (circleCounter >= radius + 40) {
-                //显示打钩（外加一个透明的渐变）
-                alphaCount += 20;
-                if (alphaCount >= 255) alphaCount = 255;
-                mPaintTick.setAlpha(alphaCount);
-                canvas.drawLines(mPoints, mPaintTick);
-                //放大的动画
-                scaleCounter -= mTickRateEnum.getScaleCounterUnit();
-                if (scaleCounter <= -scaleCounterRange) {
-                    scaleCounter = -scaleCounterRange;
-                }
-                float strokeWith = mPaintRing.getStrokeWidth() + (scaleCounter > 0 ? dp2px(mContext, 1) : -dp2px(mContext, 1));
-                mPaintRing.setStrokeWidth(strokeWith);
-                canvas.drawArc(mRectF, 90, 360, false, mPaintRing);
-            }
-        }
-        if (scaleCounter != -scaleCounterRange) {
-            postInvalidate();
+            ObjectAnimator circleAnimator = ObjectAnimator.ofInt(this, "circleRadius", radius - 5, 0);
+            circleAnimator.setInterpolator(null);
+            circleAnimator.setDuration(300);
+
+            AnimatorSet animatorSet = new AnimatorSet();
+            animatorSet.playSequentially(ringAnimator, circleAnimator);
+            animatorSet.start();
         }
     }
 
+    public int getRingProgress() {
+        return ringProgress;
+    }
+
+    public void setRingProgress(int ringProgress) {
+        this.ringProgress = ringProgress;
+        postInvalidate();
+    }
+
+    public int getCircleRadius() {
+        return circleRadius;
+    }
+
+    public void setCircleRadius(int circleRadius) {
+        this.circleRadius = circleRadius;
+        postInvalidate();
+    }
+
+    /**
+     * 设置选中还是为选中的
+     *
+     * @param checked
+     */
     public void setChecked(boolean checked) {
         if (this.isChecked != checked) {
             isChecked = checked;
@@ -216,13 +230,19 @@ public class TickView extends View {
         }
     }
 
+    /**
+     * 重置
+     */
     private void reset() {
         init();
 
-        ringCounter = 0;
+        ringProgress = 0;
         circleCounter = 0;
-        scaleCounter = 45;
+        circleRadius = 0;
         alphaCount = 0;
+
+        isAnimationRuning = false;
+        isRingAnimationEnd = false;
 
         mRectF.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius);
 
@@ -232,11 +252,6 @@ public class TickView extends View {
     private static int dp2px(Context context, float dpValue) {
         final float scale = context.getResources().getDisplayMetrics().density;
         return (int) (dpValue * scale + 0.5f);
-    }
-
-    private static int px2dp(Context context, float pxValue) {
-        final float scale = context.getResources().getDisplayMetrics().density;
-        return (int) (pxValue / scale + 0.5f);
     }
 
     public interface OnCheckedChangeListener {
