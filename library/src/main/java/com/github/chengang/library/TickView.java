@@ -42,21 +42,22 @@ public class TickView extends View {
 
     //是否被点亮
     private boolean isChecked = false;
+    //是否处于动画中
+    private boolean isAnimationRunning = false;
 
     private int unCheckBaseColor;
     private int checkBaseColor;
     private int checkTickColor;
     private int radius;
-    //勾的半径()
+
+    //勾的半径
     private float tickRadius;
     //勾的偏移
     private float tickRadiusOffset;
-    //放大动画的最大范围
-    private int scaleCounterRange;
 
     private OnCheckedChangeListener mOnCheckedChangeListener;
 
-    private boolean isAnimationRunning = false;
+    private AnimatorSet mFinalAnimatorSet;
 
     public TickView(Context context) {
         this(context, null);
@@ -71,6 +72,7 @@ public class TickView extends View {
         mContext = context;
         initAttrs(attrs);
         init();
+        initAnimatorCounter();
         setUpEvent();
     }
 
@@ -82,7 +84,6 @@ public class TickView extends View {
         radius = typedArray.getDimensionPixelOffset(R.styleable.TickView_radius, dp2px(mContext, 30));
         typedArray.recycle();
 
-        scaleCounterRange = dp2px(mContext, 30);
         tickRadius = dp2px(mContext, 12);
         tickRadiusOffset = dp2px(mContext, 4);
     }
@@ -103,9 +104,40 @@ public class TickView extends View {
         mPaintTick.setStyle(Paint.Style.STROKE);
         mPaintTick.setStrokeCap(Paint.Cap.ROUND);
         mPaintTick.setStrokeWidth(dp2px(mContext, 2.5f));
-
     }
 
+    /**
+     * 用ObjectAnimator初始化一些计数器
+     */
+    private void initAnimatorCounter() {
+        //圆环进度
+        ObjectAnimator mRingAnimator = ObjectAnimator.ofInt(this, "ringProgress", 0, 360);
+        mRingAnimator.setDuration(400);
+        mRingAnimator.setInterpolator(null);
+        //收缩动画
+        ObjectAnimator mCircleAnimator = ObjectAnimator.ofInt(this, "circleRadius", radius - 5, 0);
+        mCircleAnimator.setInterpolator(null);
+        mCircleAnimator.setDuration(200);
+        //勾出来的透明渐变
+        ObjectAnimator mAlphaAnimator = ObjectAnimator.ofInt(this, "tickAlpha", 0, 255);
+        mAlphaAnimator.setDuration(150);
+        mAlphaAnimator.setStartDelay(150);
+        //最后的放大再回弹的动画，改变画笔的宽度来实现
+        ObjectAnimator mScaleAnimator = ObjectAnimator.ofFloat(this, "ringStrokeWidth", mPaintRing.getStrokeWidth(), mPaintRing.getStrokeWidth() * 7f, mPaintRing.getStrokeWidth() / 7f);
+        mScaleAnimator.setInterpolator(null);
+        mScaleAnimator.setDuration(350);
+
+        //打钩和放大回弹的动画一起执行
+        AnimatorSet mAlphaScaleAnimatorSet = new AnimatorSet();
+        mAlphaScaleAnimatorSet.playTogether(mAlphaAnimator, mScaleAnimator);
+
+        mFinalAnimatorSet = new AnimatorSet();
+        mFinalAnimatorSet.playSequentially(mRingAnimator, mCircleAnimator, mAlphaScaleAnimatorSet);
+    }
+
+    /**
+     * 设置点击事件
+     */
     private void setUpEvent() {
         this.setOnClickListener(new OnClickListener() {
             @Override
@@ -140,8 +172,8 @@ public class TickView extends View {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        int width = getMySize(radius * 2 + scaleCounterRange * 2, widthMeasureSpec);
-        int height = getMySize(radius * 2 + scaleCounterRange * 2, heightMeasureSpec);
+        int width = getMySize((radius + dp2px(mContext, 2.5f) * 7) * 2, widthMeasureSpec);
+        int height = getMySize((radius + dp2px(mContext, 2.5f) * 7) * 2, heightMeasureSpec);
 
         height = width = Math.max(width, height);
 
@@ -187,34 +219,14 @@ public class TickView extends View {
             canvas.drawLines(mPoints, mPaintTick);
             canvas.drawArc(mRectF, 0, 360, false, mPaintRing);
         }
+        //ObjectAnimator动画替换计数器
         if (!isAnimationRunning) {
             isAnimationRunning = true;
-            ObjectAnimator ringAnimator = ObjectAnimator.ofInt(this, "ringProgress", 0, 360);
-            ringAnimator.setDuration(400);
-            ringAnimator.setInterpolator(null);
-
-            ObjectAnimator circleAnimator = ObjectAnimator.ofInt(this, "circleRadius", radius - 5, 0);
-            circleAnimator.setInterpolator(null);
-            circleAnimator.setDuration(200);
-
-            ObjectAnimator alphaAnimator = ObjectAnimator.ofInt(this, "tickAlpha", 0, 255);
-            alphaAnimator.setDuration(150);
-            alphaAnimator.setStartDelay(150);
-
-            ObjectAnimator scaleAnimator = ObjectAnimator.ofFloat(this, "ringStrokeWidth", mPaintRing.getStrokeWidth(), mPaintRing.getStrokeWidth() * 8f, mPaintRing.getStrokeWidth() / 8f);
-            scaleAnimator.setInterpolator(null);
-            scaleAnimator.setDuration(350);
-
-            AnimatorSet alphaScaleAnimatorSet = new AnimatorSet();
-            alphaScaleAnimatorSet.playTogether(alphaAnimator, scaleAnimator);
-
-            AnimatorSet animatorSet = new AnimatorSet();
-            animatorSet.playSequentially(ringAnimator, circleAnimator, alphaScaleAnimatorSet);
-            animatorSet.start();
+            mFinalAnimatorSet.start();
         }
     }
 
-    /*-------------------属性动画-------------------*/
+    /*--------------属性动画---getter/setter begin---------------*/
 
     public int getRingProgress() {
         return ringProgress;
@@ -252,6 +264,8 @@ public class TickView extends View {
         postInvalidate();
     }
 
+     /*--------------属性动画---getter/setter end---------------*/
+
     /**
      * 设置选中还是为选中的
      *
@@ -269,14 +283,10 @@ public class TickView extends View {
      */
     private void reset() {
         init();
-
         ringProgress = 0;
         circleRadius = -1;
-
         isAnimationRunning = false;
-
         mRectF.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius);
-
         invalidate();
     }
 
