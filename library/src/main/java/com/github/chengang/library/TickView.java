@@ -1,7 +1,5 @@
 package com.github.chengang.library;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
@@ -39,10 +37,8 @@ public class TickView extends View {
     private int centerY;
 
     //计数器
-    private int circleCounter = 0;
-    private int circleRadius = 0;
+    private int circleRadius = -1;
     private int ringProgress = 0;
-    private int alphaCount = 0;
 
     //是否被点亮
     private boolean isChecked = false;
@@ -60,8 +56,7 @@ public class TickView extends View {
 
     private OnCheckedChangeListener mOnCheckedChangeListener;
 
-    private boolean isAnimationRuning = false;
-    private boolean isRingAnimationEnd = false;
+    private boolean isAnimationRunning = false;
 
     public TickView(Context context) {
         this(context, null);
@@ -104,6 +99,7 @@ public class TickView extends View {
 
         if (mPaintTick == null) mPaintTick = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaintTick.setColor(isChecked ? checkTickColor : unCheckBaseColor);
+        mPaintTick.setAlpha(isChecked ? 0 : 255);
         mPaintTick.setStyle(Paint.Style.STROKE);
         mPaintTick.setStrokeCap(Paint.Cap.ROUND);
         mPaintTick.setStrokeWidth(dp2px(mContext, 2.5f));
@@ -182,23 +178,43 @@ public class TickView extends View {
         mPaintCircle.setColor(checkBaseColor);
         canvas.drawCircle(centerX, centerY, ringProgress == 360 ? radius : 0, mPaintCircle);
         //画收缩的白色圆
-        mPaintCircle.setColor(checkTickColor);
-        canvas.drawCircle(centerX, centerY, ringProgress == 360 ? circleRadius : 0, mPaintCircle);
-        if (!isAnimationRuning) {
-            isAnimationRuning = true;
+        if (ringProgress == 360) {
+            mPaintCircle.setColor(checkTickColor);
+            canvas.drawCircle(centerX, centerY, circleRadius, mPaintCircle);
+        }
+        //画勾,以及放大收缩的动画
+        if (circleRadius == 0) {
+            canvas.drawLines(mPoints, mPaintTick);
+            canvas.drawArc(mRectF, 0, 360, false, mPaintRing);
+        }
+        if (!isAnimationRunning) {
+            isAnimationRunning = true;
             ObjectAnimator ringAnimator = ObjectAnimator.ofInt(this, "ringProgress", 0, 360);
-            ringAnimator.setDuration(500);
+            ringAnimator.setDuration(400);
             ringAnimator.setInterpolator(null);
 
             ObjectAnimator circleAnimator = ObjectAnimator.ofInt(this, "circleRadius", radius - 5, 0);
             circleAnimator.setInterpolator(null);
-            circleAnimator.setDuration(300);
+            circleAnimator.setDuration(200);
+
+            ObjectAnimator alphaAnimator = ObjectAnimator.ofInt(this, "tickAlpha", 0, 255);
+            alphaAnimator.setDuration(150);
+            alphaAnimator.setStartDelay(150);
+
+            ObjectAnimator scaleAnimator = ObjectAnimator.ofFloat(this, "ringStrokeWidth", mPaintRing.getStrokeWidth(), mPaintRing.getStrokeWidth() * 8f, mPaintRing.getStrokeWidth() / 8f);
+            scaleAnimator.setInterpolator(null);
+            scaleAnimator.setDuration(350);
+
+            AnimatorSet alphaScaleAnimatorSet = new AnimatorSet();
+            alphaScaleAnimatorSet.playTogether(alphaAnimator, scaleAnimator);
 
             AnimatorSet animatorSet = new AnimatorSet();
-            animatorSet.playSequentially(ringAnimator, circleAnimator);
+            animatorSet.playSequentially(ringAnimator, circleAnimator, alphaScaleAnimatorSet);
             animatorSet.start();
         }
     }
+
+    /*-------------------属性动画-------------------*/
 
     public int getRingProgress() {
         return ringProgress;
@@ -215,6 +231,24 @@ public class TickView extends View {
 
     public void setCircleRadius(int circleRadius) {
         this.circleRadius = circleRadius;
+        postInvalidate();
+    }
+
+    public int getTickAlpha() {
+        return 0;
+    }
+
+    public void setTickAlpha(int tickAlpha) {
+        mPaintTick.setAlpha(tickAlpha);
+        postInvalidate();
+    }
+
+    public float getRingStrokeWidth() {
+        return mPaintRing.getStrokeWidth();
+    }
+
+    public void setRingStrokeWidth(float strokeWidth) {
+        mPaintRing.setStrokeWidth(strokeWidth);
         postInvalidate();
     }
 
@@ -237,12 +271,9 @@ public class TickView extends View {
         init();
 
         ringProgress = 0;
-        circleCounter = 0;
-        circleRadius = 0;
-        alphaCount = 0;
+        circleRadius = -1;
 
-        isAnimationRuning = false;
-        isRingAnimationEnd = false;
+        isAnimationRunning = false;
 
         mRectF.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius);
 
@@ -253,6 +284,8 @@ public class TickView extends View {
         final float scale = context.getResources().getDisplayMetrics().density;
         return (int) (dpValue * scale + 0.5f);
     }
+
+    /*-------------------interface-------------------*/
 
     public interface OnCheckedChangeListener {
         void onCheckedChanged(TickView tickView, boolean isCheck);
