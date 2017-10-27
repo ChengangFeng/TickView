@@ -120,10 +120,10 @@ public class TickView extends View {
         mCircleAnimator.setDuration(200);
         //勾出来的透明渐变
         ObjectAnimator mAlphaAnimator = ObjectAnimator.ofInt(this, "tickAlpha", 0, 255);
-        mAlphaAnimator.setDuration(150);
-        mAlphaAnimator.setStartDelay(150);
+        mAlphaAnimator.setDuration(200);
+        mAlphaAnimator.setStartDelay(200);
         //最后的放大再回弹的动画，改变画笔的宽度来实现
-        ObjectAnimator mScaleAnimator = ObjectAnimator.ofFloat(this, "ringStrokeWidth", mPaintRing.getStrokeWidth(), mPaintRing.getStrokeWidth() * 7f, mPaintRing.getStrokeWidth() / 7f);
+        ObjectAnimator mScaleAnimator = ObjectAnimator.ofFloat(this, "ringStrokeWidth", mPaintRing.getStrokeWidth(), mPaintRing.getStrokeWidth() * 6f, mPaintRing.getStrokeWidth() / 6f);
         mScaleAnimator.setInterpolator(null);
         mScaleAnimator.setDuration(350);
 
@@ -172,8 +172,8 @@ public class TickView extends View {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        int width = getMySize((radius + dp2px(mContext, 2.5f) * 7) * 2, widthMeasureSpec);
-        int height = getMySize((radius + dp2px(mContext, 2.5f) * 7) * 2, heightMeasureSpec);
+        int width = getMySize((radius + dp2px(mContext, 2.5f) * 6) * 2, widthMeasureSpec);
+        int height = getMySize((radius + dp2px(mContext, 2.5f) * 6) * 2, heightMeasureSpec);
 
         height = width = Math.max(width, height);
 
@@ -283,6 +283,7 @@ public class TickView extends View {
      */
     private void reset() {
         init();
+        mFinalAnimatorSet.cancel();
         ringProgress = 0;
         circleRadius = -1;
         isAnimationRunning = false;
