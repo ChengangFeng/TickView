@@ -44,6 +44,7 @@ public class TickView extends View implements TickCheckable {
 
     //是否被点亮
     private boolean isChecked = false;
+    private boolean clickable = true;
     //是否处于动画中
     private boolean isAnimationRunning = false;
 
@@ -88,6 +89,7 @@ public class TickView extends View implements TickCheckable {
         checkBaseColor = typedArray.getColor(R.styleable.TickView_check_base_color, getResources().getColor(R.color.tick_yellow));
         checkTickColor = typedArray.getColor(R.styleable.TickView_check_tick_color, getResources().getColor(R.color.tick_white));
         radius = typedArray.getDimensionPixelOffset(R.styleable.TickView_radius, dp2px(mContext, 30));
+        clickable = typedArray.getBoolean(R.styleable.TickView_clickable,true);
         int rateMode = typedArray.getInt(R.styleable.TickView_rate, 1);
         TickRateEnum mTickRateEnum = TickRateEnum.getRateEnum(rateMode);
         mRingAnimatorDuration = mTickRateEnum.getmRingAnimatorDuration();
@@ -153,16 +155,18 @@ public class TickView extends View implements TickCheckable {
      * 设置点击事件
      */
     private void setUpEvent() {
-        this.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                isChecked = !isChecked;
-                reset();
-                if (mOnCheckedChangeListener != null) {
-                    mOnCheckedChangeListener.onCheckedChanged((TickView) view, isChecked);
+        if(clickable){
+            this.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    isChecked = !isChecked;
+                    reset();
+                    if (mOnCheckedChangeListener != null) {
+                        mOnCheckedChangeListener.onCheckedChanged((TickView) view, isChecked);
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     private int getMySize(int defaultSize, int measureSpec) {

@@ -15,5 +15,6 @@
         <enum name="normal" value="1"/>
         <enum name="fast" value="2"/>
     </attr>
+    <attr name="clickable" format="boolean"/>
 </declare-styleable>
 </resources>
