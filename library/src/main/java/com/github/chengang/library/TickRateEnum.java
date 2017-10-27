@@ -8,51 +8,48 @@ package com.github.chengang.library;
 
 enum TickRateEnum {
 
-    SLOW(6, 4, 2),
-    NORMAL(12, 6, 4),
-    FAST(20, 14, 8);
+    SLOW(600, 300, 450),
+    NORMAL(400, 200, 300),
+    FAST(200, 100, 150);
 
     public static final int RATE_MODE_SLOW = 0;
     public static final int RATE_MODE_NORMAL = 1;
     public static final int RATE_MODE_FAST = 2;
 
-    //圆环进度增加的单位（小于90）
-    private int ringCounterUnit;
-    //圆圈收缩的单位
-    private int circleCounterUnit;
-    //圆圈最后放大收缩的单位
-    private int scaleCounterUnit;
+    private int mRingAnimatorDuration;
+    private int mCircleAnimatorDuration;
+    private int mScaleAnimatorDuration;
 
-    TickRateEnum(int ringCounterUnit, int circleCounterUnit, int scaleCounterUnit) {
-        this.ringCounterUnit = ringCounterUnit;
-        this.circleCounterUnit = circleCounterUnit;
-        this.scaleCounterUnit = scaleCounterUnit;
+    TickRateEnum(int mRingAnimatorDuration, int mCircleAnimatorDuration, int mScaleAnimatorDuration) {
+        this.mRingAnimatorDuration = mRingAnimatorDuration;
+        this.mCircleAnimatorDuration = mCircleAnimatorDuration;
+        this.mScaleAnimatorDuration = mScaleAnimatorDuration;
     }
 
-    public int getRingCounterUnit() {
-        return ringCounterUnit;
+    public int getmRingAnimatorDuration() {
+        return mRingAnimatorDuration;
     }
 
-    public TickRateEnum setRingCounterUnit(int ringCounterUnit) {
-        this.ringCounterUnit = ringCounterUnit;
+    public TickRateEnum setmRingAnimatorDuration(int mRingAnimatorDuration) {
+        this.mRingAnimatorDuration = mRingAnimatorDuration;
         return this;
     }
 
-    public int getCircleCounterUnit() {
-        return circleCounterUnit;
+    public int getmCircleAnimatorDuration() {
+        return mCircleAnimatorDuration;
     }
 
-    public TickRateEnum setCircleCounterUnit(int circleCounterUnit) {
-        this.circleCounterUnit = circleCounterUnit;
+    public TickRateEnum setmCircleAnimatorDuration(int mCircleAnimatorDuration) {
+        this.mCircleAnimatorDuration = mCircleAnimatorDuration;
         return this;
     }
 
-    public int getScaleCounterUnit() {
-        return scaleCounterUnit;
+    public int getmScaleAnimatorDuration() {
+        return mScaleAnimatorDuration;
     }
 
-    public TickRateEnum setScaleCounterUnit(int scaleCounterUnit) {
-        this.scaleCounterUnit = scaleCounterUnit;
+    public TickRateEnum setmScaleAnimatorDuration(int mScaleAnimatorDuration) {
+        this.mScaleAnimatorDuration = mScaleAnimatorDuration;
         return this;
     }
 

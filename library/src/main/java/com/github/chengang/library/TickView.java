@@ -14,6 +14,8 @@ import android.view.View;
 /**
  * Created by 陈岗不姓陈 on 2017/10/17.
  * <p>
+ * 自定义view -- checkbox
+ * 一个打钩的小动画
  */
 
 public class TickView extends View {
@@ -59,6 +61,10 @@ public class TickView extends View {
 
     private AnimatorSet mFinalAnimatorSet;
 
+    private int mRingAnimatorDuration;
+    private int mCircleAnimatorDuration;
+    private int mScaleAnimatorDuration;
+
     public TickView(Context context) {
         this(context, null);
     }
@@ -71,7 +77,7 @@ public class TickView extends View {
         super(context, attrs, defStyleAttr);
         mContext = context;
         initAttrs(attrs);
-        init();
+        initPaint();
         initAnimatorCounter();
         setUpEvent();
     }
@@ -82,13 +88,21 @@ public class TickView extends View {
         checkBaseColor = typedArray.getColor(R.styleable.TickView_check_base_color, getResources().getColor(R.color.tick_yellow));
         checkTickColor = typedArray.getColor(R.styleable.TickView_check_tick_color, getResources().getColor(R.color.tick_white));
         radius = typedArray.getDimensionPixelOffset(R.styleable.TickView_radius, dp2px(mContext, 30));
+        int rateMode = typedArray.getInt(R.styleable.TickView_rate, 1);
+        TickRateEnum mTickRateEnum = TickRateEnum.getRateEnum(rateMode);
+        mRingAnimatorDuration = mTickRateEnum.getmRingAnimatorDuration();
+        mCircleAnimatorDuration = mTickRateEnum.getmCircleAnimatorDuration();
+        mScaleAnimatorDuration = mTickRateEnum.getmScaleAnimatorDuration();
         typedArray.recycle();
 
         tickRadius = dp2px(mContext, 12);
         tickRadiusOffset = dp2px(mContext, 4);
     }
 
-    private void init() {
+    /**
+     * 初始化画笔
+     */
+    private void initPaint() {
         if (mPaintRing == null) mPaintRing = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaintRing.setStyle(Paint.Style.STROKE);
         mPaintRing.setColor(isChecked ? checkBaseColor : unCheckBaseColor);
@@ -112,20 +126,20 @@ public class TickView extends View {
     private void initAnimatorCounter() {
         //圆环进度
         ObjectAnimator mRingAnimator = ObjectAnimator.ofInt(this, "ringProgress", 0, 360);
-        mRingAnimator.setDuration(400);
+        mRingAnimator.setDuration(mRingAnimatorDuration);
         mRingAnimator.setInterpolator(null);
         //收缩动画
         ObjectAnimator mCircleAnimator = ObjectAnimator.ofInt(this, "circleRadius", radius - 5, 0);
         mCircleAnimator.setInterpolator(null);
-        mCircleAnimator.setDuration(200);
+        mCircleAnimator.setDuration(mCircleAnimatorDuration);
         //勾出来的透明渐变
         ObjectAnimator mAlphaAnimator = ObjectAnimator.ofInt(this, "tickAlpha", 0, 255);
         mAlphaAnimator.setDuration(200);
-        mAlphaAnimator.setStartDelay(200);
+        mAlphaAnimator.setStartDelay(100);
         //最后的放大再回弹的动画，改变画笔的宽度来实现
         ObjectAnimator mScaleAnimator = ObjectAnimator.ofFloat(this, "ringStrokeWidth", mPaintRing.getStrokeWidth(), mPaintRing.getStrokeWidth() * 6f, mPaintRing.getStrokeWidth() / 6f);
         mScaleAnimator.setInterpolator(null);
-        mScaleAnimator.setDuration(350);
+        mScaleAnimator.setDuration(mScaleAnimatorDuration);
 
         //打钩和放大回弹的动画一起执行
         AnimatorSet mAlphaScaleAnimatorSet = new AnimatorSet();
@@ -282,7 +296,7 @@ public class TickView extends View {
      * 重置
      */
     private void reset() {
-        init();
+        initPaint();
         mFinalAnimatorSet.cancel();
         ringProgress = 0;
         circleRadius = -1;
