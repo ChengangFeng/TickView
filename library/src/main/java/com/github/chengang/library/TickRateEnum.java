@@ -4,6 +4,7 @@ package com.github.chengang.library;
 /**
  * Created by 陈岗不姓陈 on 2017/10/19.
  * <p>
+ * 动画执行速率枚举配置
  */
 
 enum TickRateEnum {

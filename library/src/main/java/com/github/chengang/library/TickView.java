@@ -18,7 +18,7 @@ import android.view.View;
  * 一个打钩的小动画
  */
 
-public class TickView extends View {
+public class TickView extends View implements TickCheckable {
 
     private Context mContext;
 
@@ -280,16 +280,22 @@ public class TickView extends View {
 
      /*--------------属性动画---getter/setter end---------------*/
 
-    /**
-     * 设置选中还是为选中的
-     *
-     * @param checked
-     */
+    @Override
     public void setChecked(boolean checked) {
         if (this.isChecked != checked) {
             isChecked = checked;
             reset();
         }
+    }
+
+    @Override
+    public boolean isChecked() {
+        return isChecked;
+    }
+
+    @Override
+    public void toggle() {
+        setChecked(!isChecked);
     }
 
     /**
