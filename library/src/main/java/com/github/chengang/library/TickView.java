@@ -266,38 +266,38 @@ public class TickView extends View {
 
     /*--------------属性动画---getter/setter begin---------------*/
 
-    public int getRingProgress() {
+    private int getRingProgress() {
         return ringProgress;
     }
 
-    public void setRingProgress(int ringProgress) {
+    private void setRingProgress(int ringProgress) {
         this.ringProgress = ringProgress;
         postInvalidate();
     }
 
-    public int getCircleRadius() {
+    private int getCircleRadius() {
         return circleRadius;
     }
 
-    public void setCircleRadius(int circleRadius) {
+    private void setCircleRadius(int circleRadius) {
         this.circleRadius = circleRadius;
         postInvalidate();
     }
 
-    public int getTickAlpha() {
+    private int getTickAlpha() {
         return 0;
     }
 
-    public void setTickAlpha(int tickAlpha) {
+    private void setTickAlpha(int tickAlpha) {
         mPaintTick.setAlpha(tickAlpha);
         postInvalidate();
     }
 
-    public float getRingStrokeWidth() {
+    private float getRingStrokeWidth() {
         return mPaintRing.getStrokeWidth();
     }
 
-    public void setRingStrokeWidth(float strokeWidth) {
+    private void setRingStrokeWidth(float strokeWidth) {
         mPaintRing.setStrokeWidth(strokeWidth);
         postInvalidate();
     }
