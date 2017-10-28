@@ -9,9 +9,9 @@ package com.github.chengang.library;
 
 enum TickRateEnum {
 
-    SLOW(600, 300, 450),
-    NORMAL(400, 200, 300),
-    FAST(200, 100, 150);
+    SLOW(800, 480, 720),
+    NORMAL(500, 300, 450),
+    FAST(300, 180, 270);
 
     public static final int RATE_MODE_SLOW = 0;
     public static final int RATE_MODE_NORMAL = 1;

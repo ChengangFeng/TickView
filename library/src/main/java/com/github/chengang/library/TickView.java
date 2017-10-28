@@ -12,6 +12,7 @@ import android.graphics.RectF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.animation.DecelerateInterpolator;
 
 /**
  * Created by 陈岗不姓陈 on 2017/10/17.
@@ -59,6 +60,9 @@ public class TickView extends View {
     private float tickRadius;
     //勾的偏移
     private float tickRadiusOffset;
+
+    //最后扩大缩小动画中，画笔的宽度的最大倍数
+    private static final int SCALE_TIMES = 6;
 
     private OnCheckedChangeListener mOnCheckedChangeListener;
     private TickAnimatorListener mTickAnimatorListener;
@@ -135,14 +139,13 @@ public class TickView extends View {
         mRingAnimator.setInterpolator(null);
         //收缩动画
         ObjectAnimator mCircleAnimator = ObjectAnimator.ofInt(this, "circleRadius", radius - 5, 0);
-        mCircleAnimator.setInterpolator(null);
+        mCircleAnimator.setInterpolator(new DecelerateInterpolator());
         mCircleAnimator.setDuration(mCircleAnimatorDuration);
         //勾出来的透明渐变
         ObjectAnimator mAlphaAnimator = ObjectAnimator.ofInt(this, "tickAlpha", 0, 255);
         mAlphaAnimator.setDuration(200);
-        mAlphaAnimator.setStartDelay(100);
         //最后的放大再回弹的动画，改变画笔的宽度来实现
-        ObjectAnimator mScaleAnimator = ObjectAnimator.ofFloat(this, "ringStrokeWidth", mPaintRing.getStrokeWidth(), mPaintRing.getStrokeWidth() * 6f, mPaintRing.getStrokeWidth() / 6f);
+        ObjectAnimator mScaleAnimator = ObjectAnimator.ofFloat(this, "ringStrokeWidth", mPaintRing.getStrokeWidth(), mPaintRing.getStrokeWidth() * SCALE_TIMES, mPaintRing.getStrokeWidth() / SCALE_TIMES);
         mScaleAnimator.setInterpolator(null);
         mScaleAnimator.setDuration(mScaleAnimatorDuration);
 
@@ -210,8 +213,9 @@ public class TickView extends View {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        int width = getMySize((radius + dp2px(mContext, 2.5f) * 6) * 2, widthMeasureSpec);
-        int height = getMySize((radius + dp2px(mContext, 2.5f) * 6) * 2, heightMeasureSpec);
+        //控件的宽度等于动画最后的扩大范围的半径
+        int width = getMySize((radius + dp2px(mContext, 2.5f) * SCALE_TIMES) * 2, widthMeasureSpec);
+        int height = getMySize((radius + dp2px(mContext, 2.5f) * SCALE_TIMES) * 2, heightMeasureSpec);
 
         height = width = Math.max(width, height);
 
