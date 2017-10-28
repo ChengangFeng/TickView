@@ -1,5 +1,7 @@
 package com.github.chengang.library;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
@@ -18,7 +20,7 @@ import android.view.View;
  * 一个打钩的小动画
  */
 
-public class TickView extends View implements TickCheckable {
+public class TickView extends View {
 
     private Context mContext;
 
@@ -59,6 +61,7 @@ public class TickView extends View implements TickCheckable {
     private float tickRadiusOffset;
 
     private OnCheckedChangeListener mOnCheckedChangeListener;
+    private TickAnimatorListener mTickAnimatorListener;
 
     private AnimatorSet mFinalAnimatorSet;
 
@@ -89,7 +92,7 @@ public class TickView extends View implements TickCheckable {
         checkBaseColor = typedArray.getColor(R.styleable.TickView_check_base_color, getResources().getColor(R.color.tick_yellow));
         checkTickColor = typedArray.getColor(R.styleable.TickView_check_tick_color, getResources().getColor(R.color.tick_white));
         radius = typedArray.getDimensionPixelOffset(R.styleable.TickView_radius, dp2px(mContext, 30));
-        clickable = typedArray.getBoolean(R.styleable.TickView_clickable,true);
+        clickable = typedArray.getBoolean(R.styleable.TickView_clickable, true);
         int rateMode = typedArray.getInt(R.styleable.TickView_rate, 1);
         TickRateEnum mTickRateEnum = TickRateEnum.getRateEnum(rateMode);
         mRingAnimatorDuration = mTickRateEnum.getmRingAnimatorDuration();
@@ -149,13 +152,30 @@ public class TickView extends View implements TickCheckable {
 
         mFinalAnimatorSet = new AnimatorSet();
         mFinalAnimatorSet.playSequentially(mRingAnimator, mCircleAnimator, mAlphaScaleAnimatorSet);
+        mFinalAnimatorSet.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                if (mTickAnimatorListener != null) {
+                    mTickAnimatorListener.onAnimationEnd(TickView.this);
+                }
+            }
+
+            @Override
+            public void onAnimationStart(Animator animation) {
+                super.onAnimationStart(animation);
+                if (mTickAnimatorListener != null) {
+                    mTickAnimatorListener.onAnimationStart(TickView.this);
+                }
+            }
+        });
     }
 
     /**
      * 设置点击事件
      */
     private void setUpEvent() {
-        if(clickable){
+        if (clickable) {
             this.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -284,7 +304,11 @@ public class TickView extends View implements TickCheckable {
 
      /*--------------属性动画---getter/setter end---------------*/
 
-    @Override
+    /**
+     * 改变状态
+     *
+     * @param checked 选中还是未选中
+     */
     public void setChecked(boolean checked) {
         if (this.isChecked != checked) {
             isChecked = checked;
@@ -292,12 +316,16 @@ public class TickView extends View implements TickCheckable {
         }
     }
 
-    @Override
+    /**
+     * @return 当前状态是否选中
+     */
     public boolean isChecked() {
         return isChecked;
     }
 
-    @Override
+    /**
+     * 改变当前的状态
+     */
     public void toggle() {
         setChecked(!isChecked);
     }
@@ -328,5 +356,27 @@ public class TickView extends View implements TickCheckable {
 
     public void setOnCheckedChangeListener(OnCheckedChangeListener listener) {
         this.mOnCheckedChangeListener = listener;
+    }
+
+    public interface TickAnimatorListener {
+        void onAnimationStart(TickView tickView);
+
+        void onAnimationEnd(TickView tickView);
+    }
+
+    public void addAnimatorListener(TickAnimatorListener tickAnimatorListener) {
+        this.mTickAnimatorListener = tickAnimatorListener;
+    }
+
+    public abstract static class TickAnimatorListenerAdapter implements TickAnimatorListener {
+        @Override
+        public void onAnimationStart(TickView tickView) {
+
+        }
+
+        @Override
+        public void onAnimationEnd(TickView tickView) {
+
+        }
     }
 }
