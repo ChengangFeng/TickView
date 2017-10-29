@@ -3,7 +3,7 @@
 
 
 ## 效果图
-![](https://github.com/ChengangFeng/TickView/blob/master/art/tick_view_animation.gif)
+![](http://upload-images.jianshu.io/upload_images/956714-54cdce326517b896.gif?imageMogr2/auto-orient/strip)
 
 ## 使用
 
