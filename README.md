@@ -20,7 +20,7 @@ allprojects {
 ### Step 2
 ``` gradle
 dependencies {
-    compile 'com.github.ChengangFeng:TickView:1.0.1'
+    compile 'com.github.ChengangFeng:TickView:v1.0.2'
 }
 ```
 
