@@ -3,7 +3,7 @@
 
 
 ## 效果图
-![](https://github.com/ChengangFeng/TickView/blob/master/art/tick_view_animation.gif)
+![](http://upload-images.jianshu.io/upload_images/956714-54cdce326517b896.gif?imageMogr2/auto-orient/strip)
 
 ## 使用
 
@@ -20,7 +20,7 @@ allprojects {
 ### Step 2
 ``` gradle
 dependencies {
-    compile 'com.github.ChengangFeng:TickView:1.0.1'
+    compile 'com.github.ChengangFeng:TickView:v1.0.2'
 }
 ```
 
@@ -59,3 +59,7 @@ tickView.setChecked(true);
 ## 思路实现
 * 简书，[http://www.jianshu.com/p/673e3b3715a2](http://www.jianshu.com/p/1b2cdba03d23)
 * 掘金，[https://juejin.im/post/59ebe2b75188250989513b1b](https://juejin.im/post/59ebe2b75188250989513b1b)
+
+## 优化思路
+* 简书，[http://www.jianshu.com/p/1ff14c0156b0](http://www.jianshu.com/p/1ff14c0156b0)
+* 掘金，[https://juejin.im/post/59f5609851882534af2538c0](https://juejin.im/post/59f5609851882534af2538c0)
