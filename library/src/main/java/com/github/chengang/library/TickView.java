@@ -23,8 +23,6 @@ import android.view.animation.DecelerateInterpolator;
 
 public class TickView extends View {
 
-    private Context mContext;
-
     //内圆的画笔
     private Paint mPaintCircle;
     //外层圆环的画笔
@@ -47,31 +45,19 @@ public class TickView extends View {
 
     //是否被点亮
     private boolean isChecked = false;
-    private boolean clickable = true;
     //是否处于动画中
     private boolean isAnimationRunning = false;
 
-    private int unCheckBaseColor;
-    private int checkBaseColor;
-    private int checkTickColor;
-    private int radius;
-
-    //勾的半径
-    private float tickRadius;
-    //勾的偏移
-    private float tickRadiusOffset;
-
     //最后扩大缩小动画中，画笔的宽度的最大倍数
     private static final int SCALE_TIMES = 6;
-
-    private OnCheckedChangeListener mOnCheckedChangeListener;
-    private TickAnimatorListener mTickAnimatorListener;
 
     private AnimatorSet mFinalAnimatorSet;
 
     private int mRingAnimatorDuration;
     private int mCircleAnimatorDuration;
     private int mScaleAnimatorDuration;
+
+    TickViewConfig mConfig;
 
     public TickView(Context context) {
         this(context, null);
@@ -83,7 +69,6 @@ public class TickView extends View {
 
     public TickView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        mContext = context;
         initAttrs(attrs);
         initPaint();
         initAnimatorCounter();
@@ -91,21 +76,38 @@ public class TickView extends View {
     }
 
     private void initAttrs(AttributeSet attrs) {
-        TypedArray typedArray = mContext.obtainStyledAttributes(attrs, R.styleable.TickView);
-        unCheckBaseColor = typedArray.getColor(R.styleable.TickView_uncheck_base_color, getResources().getColor(R.color.tick_gray));
-        checkBaseColor = typedArray.getColor(R.styleable.TickView_check_base_color, getResources().getColor(R.color.tick_yellow));
-        checkTickColor = typedArray.getColor(R.styleable.TickView_check_tick_color, getResources().getColor(R.color.tick_white));
-        radius = typedArray.getDimensionPixelOffset(R.styleable.TickView_radius, dp2px(mContext, 30));
-        clickable = typedArray.getBoolean(R.styleable.TickView_clickable, true);
+        if (mConfig == null) {
+            mConfig = new TickViewConfig(getContext());
+        }
+        TypedArray typedArray = getContext().obtainStyledAttributes(attrs, R.styleable.TickView);
+        mConfig.setUnCheckBaseColor(typedArray.getColor(R.styleable.TickView_uncheck_base_color, getResources().getColor(R.color.tick_gray)))
+                .setCheckBaseColor(typedArray.getColor(R.styleable.TickView_check_base_color, getResources().getColor(R.color.tick_yellow)))
+                .setCheckTickColor(typedArray.getColor(R.styleable.TickView_check_tick_color, getResources().getColor(R.color.tick_white)))
+                .setRadius(typedArray.getDimensionPixelOffset(R.styleable.TickView_radius, dp2px(30)))
+                .setClickable(typedArray.getBoolean(R.styleable.TickView_clickable, true))
+                .setTickRadius(dp2px(12))
+                .setTickRadiusOffset(dp2px(4));
+
         int rateMode = typedArray.getInt(R.styleable.TickView_rate, 1);
         TickRateEnum mTickRateEnum = TickRateEnum.getRateEnum(rateMode);
         mRingAnimatorDuration = mTickRateEnum.getmRingAnimatorDuration();
         mCircleAnimatorDuration = mTickRateEnum.getmCircleAnimatorDuration();
         mScaleAnimatorDuration = mTickRateEnum.getmScaleAnimatorDuration();
         typedArray.recycle();
+        applyConfig(mConfig);
+        setUpEvent();
+    }
 
-        tickRadius = dp2px(mContext, 12);
-        tickRadiusOffset = dp2px(mContext, 4);
+    private void applyConfig(TickViewConfig config) {
+        assert mConfig != null : "TickView Config must not be null";
+        if (config != null && config != mConfig) {
+            mConfig.setConfig(config);
+        }
+        if (mConfig.isNeedToReApply()) {
+            initPaint();
+            initAnimatorCounter();
+            mConfig.setNeedToReApply(false);
+        }
     }
 
     /**
@@ -114,19 +116,19 @@ public class TickView extends View {
     private void initPaint() {
         if (mPaintRing == null) mPaintRing = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaintRing.setStyle(Paint.Style.STROKE);
-        mPaintRing.setColor(isChecked ? checkBaseColor : unCheckBaseColor);
+        mPaintRing.setColor(isChecked ? mConfig.getCheckBaseColor() : mConfig.getUnCheckBaseColor());
         mPaintRing.setStrokeCap(Paint.Cap.ROUND);
-        mPaintRing.setStrokeWidth(dp2px(mContext, 2.5f));
+        mPaintRing.setStrokeWidth(dp2px(2.5f));
 
         if (mPaintCircle == null) mPaintCircle = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mPaintCircle.setColor(checkBaseColor);
+        mPaintCircle.setColor(mConfig.getCheckBaseColor());
 
         if (mPaintTick == null) mPaintTick = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mPaintTick.setColor(isChecked ? checkTickColor : unCheckBaseColor);
+        mPaintTick.setColor(isChecked ? mConfig.getCheckTickColor() : mConfig.getUnCheckBaseColor());
         mPaintTick.setAlpha(isChecked ? 0 : 255);
         mPaintTick.setStyle(Paint.Style.STROKE);
         mPaintTick.setStrokeCap(Paint.Cap.ROUND);
-        mPaintTick.setStrokeWidth(dp2px(mContext, 2.5f));
+        mPaintTick.setStrokeWidth(dp2px(2.5f));
     }
 
     /**
@@ -138,7 +140,7 @@ public class TickView extends View {
         mRingAnimator.setDuration(mRingAnimatorDuration);
         mRingAnimator.setInterpolator(null);
         //收缩动画
-        ObjectAnimator mCircleAnimator = ObjectAnimator.ofInt(this, "circleRadius", radius - 5, 0);
+        ObjectAnimator mCircleAnimator = ObjectAnimator.ofInt(this, "circleRadius", mConfig.getRadius() - 5, 0);
         mCircleAnimator.setInterpolator(new DecelerateInterpolator());
         mCircleAnimator.setDuration(mCircleAnimatorDuration);
         //勾出来的透明渐变
@@ -159,16 +161,16 @@ public class TickView extends View {
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
-                if (mTickAnimatorListener != null) {
-                    mTickAnimatorListener.onAnimationEnd(TickView.this);
+                if (mConfig.getTickAnimatorListener() != null) {
+                    mConfig.getTickAnimatorListener().onAnimationEnd(TickView.this);
                 }
             }
 
             @Override
             public void onAnimationStart(Animator animation) {
                 super.onAnimationStart(animation);
-                if (mTickAnimatorListener != null) {
-                    mTickAnimatorListener.onAnimationStart(TickView.this);
+                if (mConfig.getTickAnimatorListener() != null) {
+                    mConfig.getTickAnimatorListener().onAnimationStart(TickView.this);
                 }
             }
         });
@@ -178,18 +180,17 @@ public class TickView extends View {
      * 设置点击事件
      */
     private void setUpEvent() {
-        if (clickable) {
-            this.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    isChecked = !isChecked;
-                    reset();
-                    if (mOnCheckedChangeListener != null) {
-                        mOnCheckedChangeListener.onCheckedChanged((TickView) view, isChecked);
+        setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (mConfig.isClickable()) {
+                    toggle();
+                    if (mConfig.getOnCheckedChangeListener() != null) {
+                        mConfig.getOnCheckedChangeListener().onCheckedChanged((TickView) view, isChecked);
                     }
                 }
-            });
-        }
+            }
+        });
     }
 
     private int getMySize(int defaultSize, int measureSpec) {
@@ -213,9 +214,14 @@ public class TickView extends View {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
+        final int radius = mConfig.getRadius();
+        final float tickRadius = mConfig.getTickRadius();
+        final float tickRadiusOffset = mConfig.getTickRadiusOffset();
+
         //控件的宽度等于动画最后的扩大范围的半径
-        int width = getMySize((radius + dp2px(mContext, 2.5f) * SCALE_TIMES) * 2, widthMeasureSpec);
-        int height = getMySize((radius + dp2px(mContext, 2.5f) * SCALE_TIMES) * 2, heightMeasureSpec);
+        int width = getMySize((radius + dp2px(2.5f) * SCALE_TIMES) * 2, widthMeasureSpec);
+        int height = getMySize((radius + dp2px(2.5f) * SCALE_TIMES) * 2, heightMeasureSpec);
 
         height = width = Math.max(width, height);
 
@@ -249,11 +255,11 @@ public class TickView extends View {
         //画圆弧进度
         canvas.drawArc(mRectF, 90, ringProgress, false, mPaintRing);
         //画黄色的背景
-        mPaintCircle.setColor(checkBaseColor);
-        canvas.drawCircle(centerX, centerY, ringProgress == 360 ? radius : 0, mPaintCircle);
+        mPaintCircle.setColor(mConfig.getCheckBaseColor());
+        canvas.drawCircle(centerX, centerY, ringProgress == 360 ? mConfig.getRadius() : 0, mPaintCircle);
         //画收缩的白色圆
         if (ringProgress == 360) {
-            mPaintCircle.setColor(checkTickColor);
+            mPaintCircle.setColor(mConfig.getCheckTickColor());
             canvas.drawCircle(centerX, centerY, circleRadius, mPaintCircle);
         }
         //画勾,以及放大收缩的动画
@@ -343,44 +349,21 @@ public class TickView extends View {
         ringProgress = 0;
         circleRadius = -1;
         isAnimationRunning = false;
+        final int radius = mConfig.getRadius();
         mRectF.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius);
         invalidate();
     }
 
-    private static int dp2px(Context context, float dpValue) {
-        final float scale = context.getResources().getDisplayMetrics().density;
-        return (int) (dpValue * scale + 0.5f);
+    public TickViewConfig getConfig() {
+        return mConfig;
     }
 
-    /*-------------------interface-------------------*/
-
-    public interface OnCheckedChangeListener {
-        void onCheckedChanged(TickView tickView, boolean isCheck);
+    public void setConfig(TickViewConfig tickViewConfig) {
+        if (tickViewConfig == null) return;
+        applyConfig(tickViewConfig);
     }
 
-    public void setOnCheckedChangeListener(OnCheckedChangeListener listener) {
-        this.mOnCheckedChangeListener = listener;
-    }
-
-    public interface TickAnimatorListener {
-        void onAnimationStart(TickView tickView);
-
-        void onAnimationEnd(TickView tickView);
-    }
-
-    public void addAnimatorListener(TickAnimatorListener tickAnimatorListener) {
-        this.mTickAnimatorListener = tickAnimatorListener;
-    }
-
-    public abstract static class TickAnimatorListenerAdapter implements TickAnimatorListener {
-        @Override
-        public void onAnimationStart(TickView tickView) {
-
-        }
-
-        @Override
-        public void onAnimationEnd(TickView tickView) {
-
-        }
+    private int dp2px(float dpValue) {
+        return DisplayUtil.dp2px(getContext(), dpValue);
     }
 }
