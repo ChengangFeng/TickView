@@ -2,9 +2,12 @@ package com.github.chengang.library;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 
 import java.io.Serializable;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 /**
  * Created by 陈岗不姓陈 on 2017/10/30.
@@ -13,6 +16,17 @@ import java.io.Serializable;
  */
 
 public class TickViewConfig implements Serializable {
+
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef({ANIM_ALPHA, ANIM_DYNAMIC})
+    public @interface TickAnimType {
+
+    }
+
+    public static final int ANIM_ALPHA = 0;
+    public static final int ANIM_DYNAMIC = 1;
+
+    public int tickAnim = ANIM_ALPHA;
 
     private volatile boolean isNeedToReApply;
 
@@ -51,7 +65,8 @@ public class TickViewConfig implements Serializable {
                 .setRadius(DisplayUtil.dp2px(context, 30))
                 .setClickable(true)
                 .setTickRadius(DisplayUtil.dp2px(context, 12))
-                .setTickRadiusOffset(DisplayUtil.dp2px(context, 4));
+                .setTickRadiusOffset(DisplayUtil.dp2px(context, 4))
+                .setTickAnim(ANIM_ALPHA);
     }
 
     boolean isNeedToReApply() {
@@ -145,6 +160,14 @@ public class TickViewConfig implements Serializable {
         return this;
     }
 
+    public int getTickAnim() {
+        return tickAnim;
+    }
+
+    public TickViewConfig setTickAnim(@TickAnimType int tickAnim) {
+        this.tickAnim = tickAnim;
+        return setNeedToReApply(true);
+    }
 
     public TickViewConfig setConfig(@NonNull TickViewConfig config) {
         if (config == null) return this;
@@ -155,7 +178,8 @@ public class TickViewConfig implements Serializable {
                 .setOnCheckedChangeListener(config.getOnCheckedChangeListener())
                 .setTickAnimatorListener(config.getTickAnimatorListener())
                 .setTickRadius(config.getTickRadius())
-                .setTickRadiusOffset(config.getTickRadiusOffset());
+                .setTickRadiusOffset(config.getTickRadiusOffset())
+                .setTickAnim(config.getTickAnim());
 
     }
 }
