@@ -4,13 +4,17 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.PathMeasure;
 import android.graphics.RectF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 
@@ -32,8 +36,6 @@ public class TickView extends View {
 
     //整个圆外切的矩形
     private RectF mRectF = new RectF();
-    //记录打钩路径的三个点坐标
-    private float[] mPoints = new float[8];
 
     //控件中心的X,Y坐标
     private int centerX;
@@ -58,6 +60,10 @@ public class TickView extends View {
     private int mScaleAnimatorDuration;
 
     TickViewConfig mConfig;
+
+    private Path mTickPath;
+    private Path mTickPathMeasureDst;
+    private PathMeasure mPathMeasure;
 
     public TickView(Context context) {
         this(context, null);
@@ -96,13 +102,14 @@ public class TickView extends View {
         typedArray.recycle();
         applyConfig(mConfig);
         setUpEvent();
+        if (mTickPath == null) mTickPath = new Path();
+        if (mTickPathMeasureDst == null) mTickPathMeasureDst = new Path();
+        if (mPathMeasure == null) mPathMeasure = new PathMeasure();
     }
 
     private void applyConfig(TickViewConfig config) {
         assert mConfig != null : "TickView Config must not be null";
-        if (config != null && config != mConfig) {
-            mConfig.setConfig(config);
-        }
+        mConfig.setConfig(config);
         if (mConfig.isNeedToReApply()) {
             initPaint();
             initAnimatorCounter();
@@ -125,7 +132,6 @@ public class TickView extends View {
 
         if (mPaintTick == null) mPaintTick = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaintTick.setColor(isChecked ? mConfig.getCheckTickColor() : mConfig.getUnCheckBaseColor());
-        mPaintTick.setAlpha(isChecked ? 0 : 255);
         mPaintTick.setStyle(Paint.Style.STROKE);
         mPaintTick.setStrokeCap(Paint.Cap.ROUND);
         mPaintTick.setStrokeWidth(dp2px(2.5f));
@@ -143,9 +149,34 @@ public class TickView extends View {
         ObjectAnimator mCircleAnimator = ObjectAnimator.ofInt(this, "circleRadius", mConfig.getRadius() - 5, 0);
         mCircleAnimator.setInterpolator(new DecelerateInterpolator());
         mCircleAnimator.setDuration(mCircleAnimatorDuration);
-        //勾出来的透明渐变
-        ObjectAnimator mAlphaAnimator = ObjectAnimator.ofInt(this, "tickAlpha", 0, 255);
-        mAlphaAnimator.setDuration(200);
+        Animator mTickAnima;
+        //勾勾alpha动画
+        if (mConfig.getTickAnim() == TickViewConfig.ANIM_ALPHA) {
+            //勾出来的透明渐变
+            mTickAnima = ObjectAnimator.ofInt(this, "tickAlpha", 0, 255);
+            mTickAnima.setDuration(200);
+        } else {
+            //勾勾采取动态画出
+            mTickAnima = ValueAnimator.ofFloat(0.0f, 1.0f);
+            mTickAnima.setDuration(400);
+            mTickAnima.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationStart(Animator animation) {
+                    super.onAnimationStart(animation);
+                    setTickProgress(0);
+                    mPathMeasure.nextContour();
+                    mPathMeasure.setPath(mTickPath, false);
+                    mTickPathMeasureDst.reset();
+                }
+            });
+            ((ValueAnimator) mTickAnima).addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    setTickProgress((Float) animation.getAnimatedValue());
+                }
+            });
+            mTickAnima.setInterpolator(new DecelerateInterpolator());
+        }
         //最后的放大再回弹的动画，改变画笔的宽度来实现
         ObjectAnimator mScaleAnimator = ObjectAnimator.ofFloat(this, "ringStrokeWidth", mPaintRing.getStrokeWidth(), mPaintRing.getStrokeWidth() * SCALE_TIMES, mPaintRing.getStrokeWidth() / SCALE_TIMES);
         mScaleAnimator.setInterpolator(null);
@@ -153,7 +184,7 @@ public class TickView extends View {
 
         //打钩和放大回弹的动画一起执行
         AnimatorSet mAlphaScaleAnimatorSet = new AnimatorSet();
-        mAlphaScaleAnimatorSet.playTogether(mAlphaAnimator, mScaleAnimator);
+        mAlphaScaleAnimatorSet.playTogether(mTickAnima, mScaleAnimator);
 
         mFinalAnimatorSet = new AnimatorSet();
         mFinalAnimatorSet.playSequentially(mRingAnimator, mCircleAnimator, mAlphaScaleAnimatorSet);
@@ -234,22 +265,30 @@ public class TickView extends View {
         mRectF.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius);
 
         //设置打钩的几个点坐标
-        mPoints[0] = centerX - tickRadius + tickRadiusOffset;
-        mPoints[1] = (float) centerY;
-        mPoints[2] = centerX - tickRadius / 2 + tickRadiusOffset;
-        mPoints[3] = centerY + tickRadius / 2;
-        mPoints[4] = centerX - tickRadius / 2 + tickRadiusOffset;
-        mPoints[5] = centerY + tickRadius / 2;
-        mPoints[6] = centerX + tickRadius * 2 / 4 + tickRadiusOffset;
-        mPoints[7] = centerY - tickRadius * 2 / 4;
+        final float startX = centerX - tickRadius + tickRadiusOffset;
+        final float startY = (float) centerY;
+
+        final float middleX = centerX - tickRadius / 2 + tickRadiusOffset;
+        final float middleY = centerY + tickRadius / 2;
+
+        final float endX = centerX + tickRadius * 2 / 4 + tickRadiusOffset;
+        final float endY = centerY - tickRadius * 2 / 4;
+
+        mTickPath.reset();
+        mTickPath.moveTo(startX, startY);
+        mTickPath.lineTo(middleX, middleY);
+        mTickPath.lineTo(endX, endY);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
+        if (mConfig.isNeedToReApply()) {
+            applyConfig(mConfig);
+        }
         super.onDraw(canvas);
         if (!isChecked) {
             canvas.drawArc(mRectF, 90, 360, false, mPaintRing);
-            canvas.drawLines(mPoints, mPaintTick);
+            canvas.drawPath(mTickPath, mPaintTick);
             return;
         }
         //画圆弧进度
@@ -264,7 +303,15 @@ public class TickView extends View {
         }
         //画勾,以及放大收缩的动画
         if (circleRadius == 0) {
-            canvas.drawLines(mPoints, mPaintTick);
+            if (mConfig.getTickAnim() == TickViewConfig.ANIM_DYNAMIC) {
+                mPaintTick.setAlpha((int) (255 * tickProgress));
+                mPathMeasure.getSegment(0, tickProgress * mPathMeasure.getLength(), mTickPathMeasureDst, true);
+                // canvas.drawLines(mPoints, mPaintTick);
+                Log.i("length", "onDraw: " + (tickProgress * mPathMeasure.getLength()));
+                canvas.drawPath(mTickPathMeasureDst, mPaintTick);
+            } else {
+                canvas.drawPath(mTickPath, mPaintTick);
+            }
             canvas.drawArc(mRectF, 0, 360, false, mPaintRing);
         }
         //ObjectAnimator动画替换计数器
@@ -294,8 +341,16 @@ public class TickView extends View {
         postInvalidate();
     }
 
-    private int getTickAlpha() {
-        return 0;
+    private float tickProgress = 0.0f;
+
+    private float getTickProgress() {
+        return tickProgress;
+    }
+
+    private void setTickProgress(float tickProgress) {
+        this.tickProgress = tickProgress;
+        Log.i("progress", "setTickProgress: " + tickProgress);
+        invalidate();
     }
 
     private void setTickAlpha(int tickAlpha) {
