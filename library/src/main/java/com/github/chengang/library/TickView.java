@@ -238,6 +238,8 @@ public class TickView extends View {
             case MeasureSpec.EXACTLY:
                 mySize = size;
                 break;
+            default:
+                break;
         }
         return mySize;
     }
@@ -306,8 +308,6 @@ public class TickView extends View {
             if (mConfig.getTickAnim() == TickViewConfig.ANIM_DYNAMIC) {
                 mPaintTick.setAlpha((int) (255 * tickProgress));
                 mPathMeasure.getSegment(0, tickProgress * mPathMeasure.getLength(), mTickPathMeasureDst, true);
-                // canvas.drawLines(mPoints, mPaintTick);
-                Log.i("length", "onDraw: " + (tickProgress * mPathMeasure.getLength()));
                 canvas.drawPath(mTickPathMeasureDst, mPaintTick);
             } else {
                 canvas.drawPath(mTickPath, mPaintTick);
